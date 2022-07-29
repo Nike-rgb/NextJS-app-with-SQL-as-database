@@ -1,4 +1,4 @@
-import { fetchBookById, fetchBooksRefined } from "./api/fetch_resources";
+import {search_books, fetch_book_by_isbn} from '../db/db';
 import Button from "@mui/material/Button";
 import AddIcon from "@mui/icons-material/ShoppingCart";
 import { Rating } from "react-simple-star-rating";
@@ -84,14 +84,11 @@ export default function Book(props) {
 
 export async function getServerSideProps(context) {
   const isbn = context.query.isbn;
-  const book = await fetchBookById(isbn);
-  const books_by_same_author = await (
-    await fetchBooksRefined("all", book.authors)
-  ).filter((same_author_book) => same_author_book.isbn != book.isbn);
-
+  const book = await fetch_book_by_isbn(isbn);
+  const books_by_same_author = await search_books(book[0].authors);
   const props = {
-    book,
-    books_by_same_author,
+    book: book[0],
+    books_by_same_author: books_by_same_author.filter(b => b.isbn != book[0].isbn)
   };
   return {
     props,

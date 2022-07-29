@@ -1,7 +1,6 @@
 import { useRef } from "react";
 import SearchIcon from "@mui/icons-material/Search";
 import { IconButton } from "@mui/material";
-import { fetchBestSellers, fetchAllBooks } from "./api/fetch_resources";
 import { useRouter } from "next/router";
 import BookMenu from "../components/book_menu";
 
@@ -78,7 +77,8 @@ export default function Home(props) {
 }
 
 export async function getServerSideProps() {
-  const books = await fetchAllBooks();
+  const {fetch_all_books} = await import('../db/db');
+  const books = await fetch_all_books();
   const props = { books };
   return {
     props,

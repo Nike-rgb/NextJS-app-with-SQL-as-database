@@ -1,6 +1,6 @@
 import { useRouter } from "next/router";
 import BookMenu from "../components/book_menu";
-import { fetchBooksRefined } from "./api/fetch_resources";
+import { search_books } from "../db/db";
 import ErrorIcon from "@mui/icons-material/Error";
 
 const EmptySearchResult = (props) => {
@@ -43,7 +43,7 @@ export default function SearchResults(props) {
 export async function getServerSideProps(context) {
   const search_query = context.query.s;
   const mode = context.query.mode ?? "all";
-  const search_results = await fetchBooksRefined("all", search_query);
+  const search_results = await search_books(search_query);
   const props = { search_results, search_query, mode };
   return {
     props,

@@ -33,7 +33,7 @@ export default function MyCart(props) {
         {Object.values(cart.books).map((book_in_cart, index) => {
           const { book, quantity } = book_in_cart;
           return (
-            <div className="cart_row">
+            <div key={`cart_item${index}`} className="cart_row">
               <div className="book_pic">
                 <img
                   width="40"
