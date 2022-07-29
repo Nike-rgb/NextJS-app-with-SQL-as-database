@@ -6,8 +6,9 @@ import { useRouter } from "next/router";
 import PhoneEnabledIcon from "@mui/icons-material/PhoneEnabled";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import PersonIcon from "@mui/icons-material/Person";
-import { createOrder } from "../db/db";
+//import { createOrder } from "../db/db";
 import { useSelector } from "react-redux";
+import { v4 as uuidv4 } from 'uuid';
 
 export default function CheckoutForm(props) {
   const router = useRouter();
@@ -19,8 +20,28 @@ export default function CheckoutForm(props) {
     for (let key of formdata.keys()) {
       customer_details[key] = formdata.get(key);
     }
-    await createOrder(cart, customer_details);
-    //router.push("/track/order/");
+    const { full_name, phone_number, address } = customer_details;
+  const customer_id = uuidv4();
+  const order_id = uuidv4();
+  const books = cart.books;
+  const add_to_order_book_query = "INSERT into order_book values ";
+  Object.values(books).forEach((order_book, key) => {
+    add_to_order_book_query += `("${order_id}", ${order_book.book.isbn}, ${order_book.quantity})`;
+    if(key == Object.keys(books).length -1) add_to_order_book_query += ";";
+    else add_to_order_book_query += ",";
+  });
+    await fetch('/api/order/new', {
+      method: 'POST',
+      body: JSON.stringify({
+        add_customer_query: `CALL add_customer("${customer_id}", "${full_name}", "${address}", ${phone_number})`,
+        add_order_query: 
+        `CALL add_order("${order_id}", "${customer_id}", ${new Date().getTime()}, "in progress")`,
+        add_to_order_book_query
+      }),
+      headers: {
+        'Content-Type': "appication/json"
+      }
+    });
   };
   const cancel = () => {
     props.setCheckoutFormShown(false);

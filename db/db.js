@@ -1,26 +1,48 @@
-//require("dotenv").config();
-//const mysql = require("mysql2");
-const { v4: uuidv4 } = require("uuid");
+const mysql = require("mysql2/promise");
 
-/*const pool = mysql.createPool({
+const db_config = {
   host: process.env.host,
   user: process.env.user,
   database: process.env.database_name,
+  password: process.env.password,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-});*/
+}
 
-async function query(query_str) {
-  return pool.query(query_str);
+function correct_books(book_db) {
+  const books = book_db.map((book) => {
+    const isbn = "" + book.isbn;
+    let correct_isbn = isbn;
+    if (isbn.length < 10) {
+      for (let i = 0; i < 10 - isbn.length; i++) {
+        correct_isbn = "0" + correct_isbn;
+      }
+    }
+    if (isbn.length > 10 && isbn.length < 13) {
+      for (let i = 0; i < 10 - isbn.length; i++) {
+        correct_isbn = "0" + correct_isbn;
+      }
+    }
+    book.isbn = correct_isbn;
+    return book;
+  });
+  return books;
+}
+
+export async function query(query_str) {
+  const connection = await mysql.createConnection(db_config);
+  const [rows] = await connection.query(query_str);
+  return rows;
 }
 
 export async function fetch_all_books() {
   const query_str = `
-    select * from book_details_view;
+  SELECT * FROM book_details_view;
   `;
   try {
-    const books = await query(query_str);
+    const rows = await query(query_str);
+    const books = correct_books(rows);
     return books;
   } catch (err) {
     throw err;
@@ -28,12 +50,13 @@ export async function fetch_all_books() {
 }
 
 export async function fetch_book_by_isbn(book_isbn) {
-  const query = `
-    select * from book_details_view
+  const query_str = `
+    SELECT * from book_details_view
     where isbn = ${book_isbn};
   `;
   try {
-    const books = await query(query);
+    const rows = await query(query_str);
+    const books = correct_books(rows);
     return books;
   } catch (err) {
     throw err;
@@ -56,24 +79,3 @@ export async function search_books(search_query) {
   });
 }
 
-export async function createOrder(order_cart, customer_details) {
-  const { full_name, phone_number, address } = customer_details;
-  const customer_id = uuidv4();
-  const order_id = uuidv4();
-  const books = order_cart.books;
-  //await query(`CALL create_new_customer(${customer_id}, ${full_name}, ${address}, ${phone_number})`);
-  //await query(`CALL create_new_order(${order_id}, ${customer_id}, ${new Date().getTime()}, "in progress")`);
-  const add_to_order_book_query = "INSERT into order_book values ";
-  Object.values(books).forEach((order_book) => {
-    add_to_order_book_query += `(${order_id}, ${order_book.book.isbn})`;
-  });
-  //await query(add_to_order_book_query);
-
-  console.log(
-    `CALL create_new_customer(${customer_id}, ${full_name}, ${address}, ${phone_number})`
-  );
-  console.log(
-    `CALL create_new_order(${order_id}, ${customer_id}, ${new Date().getTime()}, "in progress")`
-  );
-  console.log(add_to_order_book_query);
-}
